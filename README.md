@@ -1,7 +1,6 @@
 # 🤖 AI Agent Project — PRO Structure
 
 <div align="center">
-  <img src="https://res.cloudinary.com/ecommerce2021/image/upload/v1768626951/dev_efjbzw.jpg" alt="Code Web Không Khó" width="120" style="border-radius: 50%"/>
 
   <h3>Cấu trúc dự án AI Agent chuẩn PRO</h3>
   <p>Tổng hợp Clean Code · System Design · Naming Conventions · Monitoring · Team Agents</p>
