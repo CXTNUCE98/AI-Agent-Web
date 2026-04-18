@@ -8,12 +8,12 @@
 
 | Layer | Primary Choice | Alternative | Avoid |
 |-------|---------------|-------------|-------|
-| **Frontend — Landing/SEO** | Nuxt 3+ | — | CRA/Vue CLI (deprecated) |
-| **Frontend — Admin/Dashboard** | Vue 3 + Vite (SPA) | — | Nuxt (overkill for internal admin) |
-| **UI Components** | Nuxt UI / shadcn-vue | Vuetify | Quasar (too heavy) |
+| **Frontend — Landing/SEO** | Next.js 14+ (App Router) | — | CRA (deprecated) |
+| **Frontend — Admin/Dashboard** | React + Vite (SPA) | — | Next.js (overkill for admin) |
+| **UI Components** | shadcn/ui + Radix UI | Chakra UI | MUI (too heavy) |
 | **Styling** | Tailwind CSS | CSS Modules | Styled-components (runtime cost) |
-| **State Management** | Pinia | Vuex (deprecated) | MobX, Recoil |
-| **Data Fetching** | useFetch / useAsyncData | Vue Query | Axios alone |
+| **State Management** | Zustand | Redux Toolkit | MobX, Recoil |
+| **Data Fetching** | TanStack Query (React Query) | SWR | Axios alone |
 | **Backend Framework** | Express.js + Node | Fastify | Hapi, Koa |
 | **API Style** | REST (default) | tRPC (fullstack TS) | GraphQL (unless needed) |
 | **Language** | TypeScript (always) | — | Plain JavaScript |
@@ -22,7 +22,7 @@
 | **Cache** | Redis (ioredis) | Upstash Redis | Memcached |
 | **Queue — Simple jobs** | BullMQ (Redis-backed) | — | — |
 | **Queue — Enterprise/Microservices** | RabbitMQ | Kafka (high-throughput streams) | — |
-| **Auth** | NuxtAuth (Sidebase) / JWT+bcrypt (API) | Lucia Auth | Firebase Auth |
+| **Auth** | NextAuth.js (Next) / JWT+bcrypt (API) | Lucia Auth | Firebase Auth |
 | **File Storage** | AWS S3 / Cloudflare R2 | Supabase Storage | Local disk (not scalable) |
 | **Email** | Resend | Nodemailer + SMTP | SendGrid (expensive) |
 | **Search** | PostgreSQL FTS (start here) | Meilisearch | Elasticsearch (unless needed) |
@@ -41,100 +41,100 @@
 
 ### Decision Table
 
-| Tiêu chí | Nuxt 3 | Vue 3 + Vite (SPA) |
+| Tiêu chí | Next.js 14 (App Router) | React + Vite (SPA) |
 |----------|------------------------|--------------------|
 | **Mục đích** | Landing page, marketing, blog | Admin panel, dashboard, internal tool |
-| **SEO** | ✅ Universal Rendering — Google index tốt | ❌ SPA — khó SEO |
-| **Lưu trữ** | Vercel (tối ưu nhất) hoặc Node Server | Cloudflare Pages, Netlify, S3 |
-| **Performance** | Hybrid Rendering — tối ưu hiển thị nhanh | Client-side rendering |
-| **Auth** | NuxtAuth (Sidebase) | JWT stored in cookie/localStorage |
-| **API** | Nuxt Server API / Nitro | Gọi backend REST riêng biệt |
+| **SEO** | ✅ SSR/SSG — Google index tốt | ❌ SPA — khó SEO |
+| **Lưu trữ** | Vercel (tối ưu nhất) | Cloudflare Pages, Netlify, S3 |
+| **Performance** | Server Components — ít JS gửi về client | Client-side rendering |
+| **Auth** | NextAuth.js | JWT stored in cookie/localStorage |
+| **API** | API Routes hoặc Server Actions | Gọi backend REST riêng biệt |
 | **Build complexity** | Cao hơn | Đơn giản hơn |
 
-> **Rule**: Một project thường có **cả hai** — Nuxt 3 cho public site + Vue 3 cho admin.
+> **Rule**: Một project thường có **cả hai** — Next.js cho public site + React cho admin.
 
 ---
 
-### Nuxt 3 — Landing Page / SEO Project
+### Next.js — Landing Page / SEO Project
 
 ```bash
-npx nuxi@latest init my-landing
+npx create-next-app@latest my-landing \
+  --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
 ```
 
-**Tại sao Nuxt 3 cho landing page:**
-- Universal Rendering (SSR) → Google crawl được nội dung
-- Tích hợp sẵn Auto-imports (components, composables) 
-- Image optimization tự động (`@nuxt/image`)
-- `<head>` metadata bằng hàm `useSeoMeta` cực kì dễ dàng
-- Route Rules cho phép cache API (SWR) linh hoạt
+**Tại sao Next.js cho landing page:**
+- Server-Side Rendering (SSR) → Google crawl được nội dung
+- Static Site Generation (SSG) → build thành HTML tĩnh, lưu CDN, siêu nhanh
+- Image optimization tự động (`next/image`)
+- `<head>` metadata API tích hợp sẵn
+- Incremental Static Regeneration (ISR) → cập nhật nội dung không rebuild toàn bộ
 
-```ts
-// app.vue hoặc các trang — SEO metadata
-useSeoMeta({
-  title: 'My App',
+```tsx
+// app/layout.tsx — SEO metadata
+export const metadata: Metadata = {
+  title: { default: 'My App', template: '%s | My App' },
   description: 'Mô tả trang chính',
-  ogSiteName: 'My App',
-  ogImage: 'https://myapp.com/image.png'
-})
+  openGraph: { type: 'website', locale: 'vi_VN', url: 'https://myapp.com' },
+};
 ```
 
-**Folder structure (Nuxt 3)**
+**Folder structure (App Router)**
 ```
-src/
-├── components/           # Auto-imported components
-├── layouts/              # Default, Auth layouts
-├── pages/                # File-based routing
-│   ├── index.vue         # Homepage
-│   ├── about.vue
+src/app/
+├── (marketing)/          # Public pages (SSG/SSR)
+│   ├── page.tsx          # Homepage
+│   ├── about/page.tsx
 │   ├── blog/
-│   │   ├── index.vue     # Blog list
-│   │   └── [slug].vue    # Blog post
-│   └── pricing.vue
-├── server/
-│   └── api/              # Nitro API Routes
-└── app.vue
+│   │   ├── page.tsx      # Blog list (SSG)
+│   │   └── [slug]/page.tsx  # Blog post (ISR)
+│   └── pricing/page.tsx
+├── (auth)/               # Auth pages
+│   ├── login/page.tsx
+│   └── register/page.tsx
+├── api/v1/               # API Routes
+└── layout.tsx
 ```
 
 ---
 
-### Vue 3 + Vite — Admin / Dashboard Project
+### React + Vite — Admin / Dashboard Project
 
 ```bash
-npm create vite@latest my-admin -- --template vue-ts
+npx create-vite@latest my-admin -- --template react-ts
 cd my-admin && npm install
 ```
 
-**Tại sao Vue SPA cho admin:**
+**Tại sao React SPA cho admin:**
 - Admin panel không cần SEO (đăng nhập mới vào được)
 - SPA build đơn giản, deploy lên S3/Cloudflare Pages/Nginx
-- Dùng Composition API + Pinia để quản lý state phức tạp cực kỳ dễ dàng
-- Tốc độ rebuild và hot reload bằng Vite chớp nhoáng
+- Trạng thái phức tạp (table, filter, form) dễ quản lý hơn
+- Hot reload nhanh hơn trong development
 
-**Folder structure (Vite Vue SPA)**
+**Folder structure (Vite SPA)**
 ```
 src/
-├── router/              # Vue Router
-├── views/               # Các trang chính
-│   ├── Dashboard.vue
+├── pages/               # Các trang (react-router)
+│   ├── Dashboard.tsx
 │   ├── Users/
-│   │   ├── UserList.vue
-│   │   └── UserDetail.vue
-│   └── Settings.vue
+│   │   ├── UserList.tsx
+│   │   └── UserDetail.tsx
+│   └── Settings.tsx
 ├── components/
 │   ├── layout/          # Sidebar, Header, Layout
 │   └── ui/              # Shared UI components
-├── stores/              # Pinia state management
-│   └── users.ts
-├── composables/         # Vue composables (useFetch, useAuth)
+├── features/            # Feature-based modules
+│   └── users/
+│       ├── api.ts       # TanStack Query hooks
+│       ├── store.ts     # Zustand slice
+│       └── types.ts
 ├── lib/                 # axios instance, utils
-└── main.ts
+└── main.tsx
 ```
 
 **Key Rules cho Admin:**
-- Protected routes với Vue Router meta fields (`requiresAuth: true`)
-- Role-based UI: Custom directive `v-permission` để ẩn/hiện element
+- Protected routes với `<AuthGuard>` component
+- Role-based UI: `usePermission()` hook ẩn/hiện features
 - Token refresh tự động trong axios interceptor
-
 
 ---
 
@@ -398,7 +398,7 @@ async function findUserByEmail(email: string): Promise<User | null> {}
 
 ## Tech Stack
 - Runtime: Node.js 20 + TypeScript
-- Framework: Nuxt 3
+- Framework: Next.js 14
 - Database: PostgreSQL (Prisma)
 - Cache: Redis
 
@@ -421,10 +421,10 @@ npm run dev
 
 ```mermaid
 graph LR
-  Client --> Nuxt3
-  Nuxt3 --> PostgreSQL
-  Nuxt3 --> Redis
-  Nuxt3 --> Queue[BullMQ Queue]
+  Client --> NextJS
+  NextJS --> PostgreSQL
+  NextJS --> Redis
+  NextJS --> Queue[BullMQ Queue]
   Queue --> Worker[Background Worker]
 ```
 
