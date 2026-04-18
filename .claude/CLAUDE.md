@@ -68,7 +68,7 @@ All rules in `.claude/rules/` are **mandatory** and must be followed:
 ### Architecture & Design
 | Rule | Description |
 |------|-------------|
-| `tech-stack.md` | Approved technologies (Next.js, PG, Redis, Prisma) |
+| `tech-stack.md` | Approved technologies (Nuxt.js, PG, Redis, Prisma) |
 | `system-design.md` | CAP theorem, caching, scaling, queues |
 | `project-structure.md` | Layered architecture, folder organization |
 | `api-conventions.md` | REST standards, response envelopes |

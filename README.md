@@ -120,7 +120,7 @@ This repository provides a **production-grade configuration** for Claude Code AI
 
 | Agent | Role | Invoke When |
 |-------|------|-------------|
-| **Frontend Developer** | Next.js, React, TypeScript, UI | Components, pages, state |
+| **Frontend Developer** | Nuxt.js, Vue, TypeScript, UI | Components, pages, state |
 | **Backend Developer** | Express, Prisma, Redis, BullMQ | APIs, services, jobs |
 | **Systems Architect** | Architecture, ADRs, scaling | System design decisions |
 
@@ -147,10 +147,10 @@ This repository provides a **production-grade configuration** for Claude Code AI
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend (SEO)** | Next.js 14 (App Router) |
-| **Frontend (Admin)** | React + Vite |
+| **Frontend (SEO)** | Nuxt.js 3 |
+| **Frontend (Admin)** | Vue + Vite |
 | **Styling** | Tailwind CSS + shadcn/ui |
-| **State** | Zustand + TanStack Query |
+| **State** | Pinia + TanStack Query |
 | **Backend** | Express.js + TypeScript |
 | **ORM** | Prisma |
 | **Database** | PostgreSQL |

@@ -1,6 +1,6 @@
 ---
 name: Frontend Developer
-description: Expert frontend developer specializing in Next.js, React, TypeScript, and modern UI development
+description: Expert frontend developer specializing in Nuxt.js, Vue, TypeScript, and modern UI development
 ---
 
 # Frontend Developer Agent
@@ -20,16 +20,16 @@ Users should achieve their goals without fighting the UI. Performance, accessibi
 ## Tech Stack
 
 ```
-Framework:     Next.js 14+ (App Router)
+Framework:     Nuxt.js 3+
 Language:      TypeScript 5+ (strict mode)
 Styling:       Tailwind CSS + CSS Variables
-Components:    shadcn/ui + Radix UI primitives
-State:         Zustand (global) + useState/useReducer (local)
-Server State:  TanStack Query (React Query)
-Forms:         React Hook Form + Zod validation
-Animation:     Framer Motion (sparingly)
-Icons:         Lucide React
-Testing:       Vitest + Testing Library + Playwright
+Components:    shadcn-vue + Radix Vue primitives
+State:         Pinia (global) + ref/reactive (local)
+Server State:  TanStack Query (Vue Query)
+Forms:         VeeValidate + Zod validation
+Animation:     VueUse/Motion (sparingly)
+Icons:         Lucide Vue
+Testing:       Vitest + Vue Test Utils + Playwright
 ```
 
 ---
@@ -133,18 +133,17 @@ src/
 │   ├── user.types.ts
 │   └── index.ts
 │
-├── app/                       # Next.js App Router
-│   ├── (auth)/                # Auth route group
-│   │   ├── login/page.tsx
-│   │   └── register/page.tsx
-│   ├── (dashboard)/           # Dashboard route group
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   ├── api/                   # API routes
-│   │   └── v1/
-│   ├── layout.tsx
-│   ├── page.tsx
-│   └── globals.css
+├── pages/                     # Nuxt file-based routing
+│   ├── auth/                  # Auth pages
+│   │   ├── login.vue
+│   │   └── register.vue
+│   ├── dashboard/             # Dashboard pages
+│   │   └── index.vue
+│   └── index.vue
+├── server/                    # Nitro API routes
+│   └── api/
+│       └── v1/
+├── app.vue                    # Root component
 │
 └── tests/                     # Test files
     ├── unit/
@@ -245,45 +244,50 @@ export const Button: FC<ButtonProps> = ({
 };
 ```
 
-### Server vs Client Components
+### Server vs Client (Nuxt 3)
 
-```tsx
-// Default: Server Component (no directive)
-// Use for: data fetching, static content, layouts
-
-// Client Component: only when needed
-'use client';
-// Use for: useState, useEffect, event handlers, browser APIs
-```
+Trong Nuxt 3, mọi file `.vue` theo mặc định hỗ trợ SSR. Cẩn thận khi sử dụng các document/window API. Bọc UI client-only bằng `<ClientOnly>`.
 
 ---
 
 ## Data Fetching Patterns
 
-### Server Component (Preferred)
+### Nuxt Fetching (Preferred for SSR/SEO)
 
-```tsx
-async function UserProfile({ userId }: { userId: string }) {
-  const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user) notFound();
-  return <ProfileCard user={user} />;
+```vue
+<script setup>
+const route = useRoute()
+const { data: user, error } = await useFetch(`/api/users/${route.params.id}`)
+
+if (error.value) {
+  throw createError({ statusCode: 404, message: 'User not found' })
 }
+</script>
+
+<template>
+  <ProfileCard :user="user" />
+</template>
 ```
 
-### Client Component (TanStack Query)
+### Vue Query (Client-side Heavy Interactions)
 
-```tsx
-'use client';
+```vue
+<script setup>
+import { useQuery } from '@tanstack/vue-query'
 
-const { data, isLoading, error } = useQuery({
-  queryKey: ['user', userId],
-  queryFn: () => api.users.getById(userId),
+const route = useRoute()
+const { data: user, isLoading, isError, refetch } = useQuery({
+  queryKey: ['user', route.params.id],
+  queryFn: () => api.users.getById(route.params.id),
   staleTime: 60_000,
-});
+})
+</script>
 
-if (isLoading) return <ProfileSkeleton />;
-if (error) return <ErrorState onRetry={refetch} />;
-return <ProfileCard user={data} />;
+<template>
+  <ProfileSkeleton v-if="isLoading" />
+  <ErrorState v-else-if="isError" @retry="refetch" />
+  <ProfileCard v-else :user="user" />
+</template>
 ```
 
 ---

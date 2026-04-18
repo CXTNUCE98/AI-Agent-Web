@@ -8,12 +8,12 @@
 
 | Layer | Primary Choice | Alternative | Avoid |
 |-------|---------------|-------------|-------|
-| **Frontend — Landing/SEO** | Next.js 14+ (App Router) | — | CRA (deprecated) |
-| **Frontend — Admin/Dashboard** | React + Vite (SPA) | — | Next.js (overkill for admin) |
-| **UI Components** | shadcn/ui + Radix UI | Chakra UI | MUI (too heavy) |
+| **Frontend — Landing/SEO** | Nuxt.js 3+ | — | CRA (deprecated) |
+| **Frontend — Admin/Dashboard** | Vue 3 + Vite (SPA) | — | Nuxt.js (overkill for admin) |
+| **UI Components** | shadcn-vue + Radix Vue | Vuetify | Quasar (too heavy) |
 | **Styling** | Tailwind CSS | CSS Modules | Styled-components (runtime cost) |
-| **State Management** | Zustand | Redux Toolkit | MobX, Recoil |
-| **Data Fetching** | TanStack Query (React Query) | SWR | Axios alone |
+| **State Management** | Pinia | Vuex | MobX |
+| **Data Fetching** | TanStack Query (Vue Query) | Nuxt fetching (useFetch) | Axios alone |
 | **Backend Framework** | Express.js + Node | Fastify | Hapi, Koa |
 | **API Style** | REST (default) | tRPC (fullstack TS) | GraphQL (unless needed) |
 | **Language** | TypeScript (always) | — | Plain JavaScript |
@@ -41,99 +41,105 @@
 
 ### Decision Table
 
-| Tiêu chí | Next.js 14 (App Router) | React + Vite (SPA) |
-|----------|------------------------|--------------------|
+| Tiêu chí | Nuxt.js 3 | Vue 3 + Vite (SPA) |
+|----------|-----------|--------------------|
 | **Mục đích** | Landing page, marketing, blog | Admin panel, dashboard, internal tool |
 | **SEO** | ✅ SSR/SSG — Google index tốt | ❌ SPA — khó SEO |
-| **Lưu trữ** | Vercel (tối ưu nhất) | Cloudflare Pages, Netlify, S3 |
-| **Performance** | Server Components — ít JS gửi về client | Client-side rendering |
-| **Auth** | NextAuth.js | JWT stored in cookie/localStorage |
-| **API** | API Routes hoặc Server Actions | Gọi backend REST riêng biệt |
+| **Lưu trữ** | Vercel, Netlify | Cloudflare Pages, S3 |
+| **Performance** | Server-side rendering, auto-imports | Client-side rendering |
+| **Auth** | Nuxt Auth (Sidebase) | JWT stored in cookie/localStorage |
+| **API** | Server API Routes (Nitro) | Gọi backend REST riêng biệt |
 | **Build complexity** | Cao hơn | Đơn giản hơn |
 
-> **Rule**: Một project thường có **cả hai** — Next.js cho public site + React cho admin.
+> **Rule**: Một project thường có **cả hai** — Nuxt.js cho public site + Vue SPA cho admin.
 
 ---
 
-### Next.js — Landing Page / SEO Project
+### Nuxt.js 3 — Landing Page / SEO Project
 
 ```bash
-npx create-next-app@latest my-landing \
-  --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
+npx nuxi@latest init my-landing
 ```
 
-**Tại sao Next.js cho landing page:**
+**Tại sao Nuxt.js cho landing page:**
 - Server-Side Rendering (SSR) → Google crawl được nội dung
-- Static Site Generation (SSG) → build thành HTML tĩnh, lưu CDN, siêu nhanh
-- Image optimization tự động (`next/image`)
-- `<head>` metadata API tích hợp sẵn
-- Incremental Static Regeneration (ISR) → cập nhật nội dung không rebuild toàn bộ
+- Static Site Generation (SSG) → build thành HTML tĩnh
+- Auto-imports cho components, composables, và plugins
+- Định tuyến dựa trên thư mục (File-based routing) mạnh mẽ
+- Nuxt Image (`@nuxt/image`) tối ưu hóa hình ảnh
 
-```tsx
-// app/layout.tsx — SEO metadata
-export const metadata: Metadata = {
-  title: { default: 'My App', template: '%s | My App' },
-  description: 'Mô tả trang chính',
-  openGraph: { type: 'website', locale: 'vi_VN', url: 'https://myapp.com' },
-};
+```vue
+<!-- app.vue — SEO metadata -->
+<script setup>
+useHead({
+  titleTemplate: (titleChunk) => {
+    return titleChunk ? `${titleChunk} - My App` : 'My App';
+  },
+  meta: [
+    { name: 'description', content: 'Mô tả trang chính' }
+  ]
+})
+</script>
 ```
 
-**Folder structure (App Router)**
+**Folder structure (Nuxt 3)**
 ```
-src/app/
-├── (marketing)/          # Public pages (SSG/SSR)
-│   ├── page.tsx          # Homepage
-│   ├── about/page.tsx
+/
+├── components/           # Auto-imported components
+├── composables/          # Auto-imported hooks
+├── layouts/              # Shared layouts
+│   └── default.vue
+├── pages/                # File-based routing
+│   ├── index.vue         # Homepage
+│   ├── about.vue
 │   ├── blog/
-│   │   ├── page.tsx      # Blog list (SSG)
-│   │   └── [slug]/page.tsx  # Blog post (ISR)
-│   └── pricing/page.tsx
-├── (auth)/               # Auth pages
-│   ├── login/page.tsx
-│   └── register/page.tsx
-├── api/v1/               # API Routes
-└── layout.tsx
+│   │   ├── index.vue
+│   │   └── [slug].vue
+│   └── login.vue
+├── server/               # Nitro API Routes
+│   └── api/
+└── nuxt.config.ts        # Nuxt config
 ```
 
 ---
 
-### React + Vite — Admin / Dashboard Project
+### Vue + Vite — Admin / Dashboard Project
 
 ```bash
-npx create-vite@latest my-admin -- --template react-ts
+npm create vue@latest my-admin
 cd my-admin && npm install
 ```
 
-**Tại sao React SPA cho admin:**
+**Tại sao Vue SPA cho admin:**
 - Admin panel không cần SEO (đăng nhập mới vào được)
 - SPA build đơn giản, deploy lên S3/Cloudflare Pages/Nginx
-- Trạng thái phức tạp (table, filter, form) dễ quản lý hơn
-- Hot reload nhanh hơn trong development
+- Vue Composition API giúp quản lý trạng thái phức tạp dễ dàng hơn
+- Hệ sinh thái mạnh mẽ (Vue Router, Pinia, Vue Query)
 
-**Folder structure (Vite SPA)**
+**Folder structure (Vite Vue SPA)**
 ```
 src/
-├── pages/               # Các trang (react-router)
-│   ├── Dashboard.tsx
-│   ├── Users/
-│   │   ├── UserList.tsx
-│   │   └── UserDetail.tsx
-│   └── Settings.tsx
+├── pages/               # Các trang (vue-router)
+│   ├── Dashboard.vue
+│   ├── users/
+│   │   ├── UserList.vue
+│   │   └── UserDetail.vue
+│   └── Settings.vue
 ├── components/
 │   ├── layout/          # Sidebar, Header, Layout
 │   └── ui/              # Shared UI components
 ├── features/            # Feature-based modules
 │   └── users/
-│       ├── api.ts       # TanStack Query hooks
-│       ├── store.ts     # Zustand slice
+│       ├── composables/ # TanStack Query composables
+│       ├── store.ts     # Pinia store
 │       └── types.ts
 ├── lib/                 # axios instance, utils
-└── main.tsx
+└── main.ts
 ```
 
 **Key Rules cho Admin:**
-- Protected routes với `<AuthGuard>` component
-- Role-based UI: `usePermission()` hook ẩn/hiện features
+- Protected routes với Vue Router's `beforeEach` navigation guards
+- Role-based UI: Custom directives hoặc store để ẩn/hiện features
 - Token refresh tự động trong axios interceptor
 
 ---
@@ -398,7 +404,7 @@ async function findUserByEmail(email: string): Promise<User | null> {}
 
 ## Tech Stack
 - Runtime: Node.js 20 + TypeScript
-- Framework: Next.js 14
+- Framework: Nuxt.js 3
 - Database: PostgreSQL (Prisma)
 - Cache: Redis
 
